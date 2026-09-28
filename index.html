@@ -544,16 +544,18 @@
 
   <!-- Main Processing Area -->
   <main class="main-area">
-    <!-- Upload Box -->
-    <div class="upload-box" id="dropZone">
+    <!-- Upload Box (100% iPhone & PC Compatible) -->
+    <div class="upload-box" id="dropZone" style="position: relative; overflow: hidden; cursor: pointer;">
+      <!-- 透明なinput[type=file]を全面に配置し、iOSのネイティブタッチを100%確実に発火させる -->
+      <input type="file" id="fileInput" accept="image/*" multiple
+             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; font-size: 0;">
       <div class="upload-icon">📷</div>
       <div class="upload-text">手描きイラスト・写真をタップして選択</div>
-      <div class="upload-hint">iPhone/Androidのカメラ・アルバムから一瞬で読み込み（1〜40枚）</div>
-      <input type="file" id="fileInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none;">
-      <div>
-        <button class="btn-camera" type="button" onclick="document.getElementById('fileInput').click();">
+      <div class="upload-hint">iPhone・Androidの写真アルバム・カメラから直接選べます（1〜40枚）</div>
+      <div style="pointer-events: none;">
+        <div class="btn-camera">
           📁 写真を選ぶ / カメラで撮る
-        </button>
+        </div>
       </div>
     </div>
 
@@ -753,8 +755,7 @@ document.querySelectorAll(".bg-btn").forEach(btn => {
   });
 });
 
-// Drag & Drop
-dropZone.addEventListener("click", () => fileInput.click());
+// Drag & Drop for PC
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("dragover");
@@ -763,10 +764,15 @@ dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
-  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+    handleFiles(e.dataTransfer.files);
+  }
 });
 fileInput.addEventListener("change", (e) => {
-  if (e.target.files.length) handleFiles(e.target.files);
+  if (e.target && e.target.files && e.target.files.length) {
+    handleFiles(e.target.files);
+    e.target.value = ""; // リセットして同じ写真の再選択を可能にする
+  }
 });
 
 // Fast Image Loader (iPhone native zero-copy)
