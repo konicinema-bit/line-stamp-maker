@@ -233,6 +233,125 @@
       width: 20px;
       height: 20px;
     }
+    /* Text Settings Styling */
+    .text-settings-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .text-preset-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .btn-text-preset {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.15s;
+    }
+    .btn-text-preset.active {
+      background: var(--line-green);
+      color: white;
+      border-color: var(--line-green);
+    }
+    .btn-outline-preset {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.15s;
+    }
+    .btn-outline-preset.active {
+      background: #334155;
+      color: white;
+      border-color: #334155;
+    }
+    .color-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .color-swatch-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .color-swatch-btn:hover {
+      transform: scale(1.12);
+    }
+    .color-swatch-btn.active {
+      border-color: var(--line-green) !important;
+      box-shadow: 0 0 0 2.5px var(--line-green);
+      transform: scale(1.12);
+    }
+    .input-color-native {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      background: none;
+    }
+    .pos-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    .btn-pos {
+      padding: 7px 4px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1.5px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      color: var(--text-main);
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .btn-pos:hover {
+      border-color: var(--line-green);
+    }
+    .btn-pos.active {
+      background: #e8f8ee;
+      border-color: var(--line-green);
+      color: var(--line-green);
+    }
+    .btn-apply-all {
+      background: white;
+      border: 1.5px dashed var(--line-green);
+      color: var(--line-green);
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .btn-apply-all:hover {
+      background: #e8f8ee;
+    }
     /* Upload & Action Area */
     .main-area {
       display: flex;
@@ -666,6 +785,90 @@
 
     <hr style="border:none; border-top:1px solid var(--border-color); margin: 16px 0;">
 
+    <!-- 🔤 文字・セリフ設定 -->
+    <div class="control-group" id="groupTextSettings">
+      <label>🔤 セリフ・文字入れ設定</label>
+      <div class="text-settings-box">
+        <!-- セリフ入力 -->
+        <div>
+          <label style="font-size:0.8rem; font-weight:700; color:var(--text-main); margin-bottom:4px; display:block;">
+            💬 選択中スタンプ（<span id="textTargetLabel">#01</span>）のセリフ
+          </label>
+          <input type="text" id="panelTextInput" placeholder="セリフを入力（例: ありがとう、OK！）"
+                 style="width:100%; padding:8px 12px; border-radius:8px; border:1.5px solid var(--border-color); font-size:0.9rem; font-weight:600; box-sizing:border-box;">
+        </div>
+
+        <!-- 文字の大きさ -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.8rem; font-weight:700; color:var(--text-main);">📏 文字の大きさ</span>
+            <span id="textSizeVal" style="font-size:0.85rem; font-weight:bold; color:var(--line-green);">32px</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="textSizeRange" min="16" max="64" value="32" step="2">
+          </div>
+          <div class="text-preset-buttons" style="margin-top:6px;">
+            <button type="button" class="btn-text-preset" data-size="22">小 (22px)</button>
+            <button type="button" class="btn-text-preset active" data-size="32">中 (32px)</button>
+            <button type="button" class="btn-text-preset" data-size="42">大 (42px)</button>
+            <button type="button" class="btn-text-preset" data-size="54">特大 (54px)</button>
+          </div>
+        </div>
+
+        <!-- 文字の色 -->
+        <div>
+          <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">🎨 文字の色</span>
+          <div class="color-picker-row">
+            <button type="button" class="color-swatch-btn active" data-color="#1E1E1E" style="background:#1E1E1E;" title="黒"></button>
+            <button type="button" class="color-swatch-btn" data-color="#FFFFFF" style="background:#FFFFFF; border:2px solid #94a3b8;" title="白"></button>
+            <button type="button" class="color-swatch-btn" data-color="#EF4444" style="background:#EF4444;" title="赤"></button>
+            <button type="button" class="color-swatch-btn" data-color="#2563EB" style="background:#2563EB;" title="青"></button>
+            <button type="button" class="color-swatch-btn" data-color="#F97316" style="background:#F97316;" title="橙"></button>
+            <button type="button" class="color-swatch-btn" data-color="#10B981" style="background:#10B981;" title="緑"></button>
+            <button type="button" class="color-swatch-btn" data-color="#EC4899" style="background:#EC4899;" title="ピンク"></button>
+            <button type="button" class="color-swatch-btn" data-color="#F59E0B" style="background:#F59E0B;" title="黄"></button>
+            <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--text-sub); cursor:pointer;">
+              <input type="color" id="textColorPicker" value="#1E1E1E" class="input-color-native">
+              <span>自由色</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 文字の配置 (3x3 グリッド) -->
+        <div>
+          <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">📍 文字の配置</span>
+          <div class="pos-grid">
+            <button type="button" class="btn-pos" data-pos="top-left">↖️ 左上</button>
+            <button type="button" class="btn-pos" data-pos="top">⬆️ 上</button>
+            <button type="button" class="btn-pos" data-pos="top-right">↗️ 右上</button>
+            <button type="button" class="btn-pos" data-pos="left">⬅️ 左</button>
+            <button type="button" class="btn-pos" data-pos="center">🎯 中央</button>
+            <button type="button" class="btn-pos" data-pos="right">➡️ 右</button>
+            <button type="button" class="btn-pos" data-pos="bottom-left">↙️ 左下</button>
+            <button type="button" class="btn-pos active" data-pos="bottom">⬇️ 下</button>
+            <button type="button" class="btn-pos" data-pos="bottom-right">↘️ 右下</button>
+          </div>
+        </div>
+
+        <!-- 文字のフチ取り -->
+        <div>
+          <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">🔲 文字のフチ取り</span>
+          <div class="text-preset-buttons">
+            <button type="button" class="btn-outline-preset active" data-outline="white">🤍 白フチ</button>
+            <button type="button" class="btn-outline-preset" data-outline="black">🖤 黒フチ</button>
+            <button type="button" class="btn-outline-preset" data-outline="none">🚫 なし</button>
+          </div>
+        </div>
+
+        <!-- 全スタンプ一括適用 -->
+        <button type="button" class="btn-apply-all" id="btnApplyAllTextStyle">
+          📋 すべてのスタンプにこの文字スタイルを適用
+        </button>
+      </div>
+    </div>
+
+    <hr style="border:none; border-top:1px solid var(--border-color); margin: 16px 0;">
+
     <!-- LINE Stamp Margin -->
     <div class="control-group">
       <label>📐 公式規定 余白 (マージン)</label>
@@ -765,6 +968,20 @@ const marginRange = document.getElementById("marginRange");
 const marginVal = document.getElementById("marginVal");
 const mainTabCheck = document.getElementById("mainTabCheck");
 
+// Text Styling Defaults & State
+let defaultTextSize = 32;
+let defaultTextColor = "#1E1E1E";
+let defaultTextPos = "bottom";
+let defaultTextOutline = "white";
+
+// Text Controls Elements
+const textTargetLabel = document.getElementById("textTargetLabel");
+const panelTextInput = document.getElementById("panelTextInput");
+const textSizeRange = document.getElementById("textSizeRange");
+const textSizeVal = document.getElementById("textSizeVal");
+const textColorPicker = document.getElementById("textColorPicker");
+const btnApplyAllTextStyle = document.getElementById("btnApplyAllTextStyle");
+
 // High-speed RAF scheduler for smooth 60fps
 function triggerReprocess() {
   if (isProcessing) {
@@ -846,6 +1063,7 @@ function setActiveIndex(idx) {
   if (isEyedropperActive) {
     toggleEyedropper(false);
   }
+  syncTextControlsToActive();
   updateLivePreview();
 }
 
@@ -923,6 +1141,260 @@ function setTargetColor(r, g, b) {
   colorRgbText.textContent = `R:${r} G:${g} B:${b}`;
   triggerReprocess();
 }
+
+// Mode Selection Change
+modeSelect.addEventListener("change", () => {
+  const mode = modeSelect.value;
+  if (mode === "outer_color") {
+    groupEyedropper.style.display = "block";
+    groupTolerance.style.display = "block";
+    groupLeakGuard.style.display = "block";
+    groupThickness.style.display = "none";
+    modeDesc.textContent = "イラストの白目や服を残し、スポイトで選んだ外側の紙色だけを透明にします";
+  } else if (mode === "all_color") {
+    groupEyedropper.style.display = "block";
+    groupTolerance.style.display = "block";
+    groupLeakGuard.style.display = "none";
+    groupThickness.style.display = "none";
+    modeDesc.textContent = "画像全体から、スポイトで選んだ色と同系統の色をすべて透明にします";
+  } else if (mode === "line") {
+    groupEyedropper.style.display = "none";
+    groupTolerance.style.display = "none";
+    groupLeakGuard.style.display = "none";
+    groupThickness.style.display = "block";
+    modeDesc.textContent = "黒い線画のみを抽出し、太さを自由に変更します";
+  } else {
+    groupEyedropper.style.display = "none";
+    groupTolerance.style.display = "none";
+    groupLeakGuard.style.display = "none";
+    groupThickness.style.display = "none";
+    modeDesc.textContent = "透過を行わず、サイズ成形のみを行います";
+  }
+  triggerReprocess();
+});
+
+// Slider Listeners
+toleranceRange.addEventListener("input", (e) => {
+  toleranceVal.textContent = e.target.value;
+  triggerReprocess();
+});
+thicknessRange.addEventListener("input", (e) => {
+  const v = parseInt(e.target.value);
+  thicknessVal.textContent = v > 0 ? `+${v}` : v;
+  triggerReprocess();
+});
+leakGuardRange.addEventListener("input", (e) => {
+  leakGuardVal.textContent = `${e.target.value}px`;
+  triggerReprocess();
+});
+outlineWidthRange.addEventListener("input", (e) => {
+  outlineWidthVal.textContent = `${e.target.value}px`;
+  triggerReprocess();
+});
+marginRange.addEventListener("input", (e) => {
+  marginVal.textContent = `${e.target.value}px`;
+  triggerReprocess();
+});
+outlineCheck.addEventListener("change", () => {
+  document.getElementById("outlineSubControls").style.display = outlineCheck.checked ? "block" : "none";
+  triggerReprocess();
+});
+
+// Background Simulator Toggles (同期連動)
+function setPreviewBg(bgClass) {
+  currentBgClass = bgClass;
+  document.querySelectorAll(".mini-bg-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-bg") === bgClass);
+  });
+  document.querySelectorAll(".bg-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-bg") === bgClass);
+  });
+  livePreviewBox.className = `live-preview-box ${currentBgClass} ${isEyedropperActive ? "eyedropper-targeting" : ""}`;
+  document.querySelectorAll(".stamp-preview-box").forEach(box => {
+    box.className = `stamp-preview-box ${currentBgClass} ${isEyedropperActive ? "eyedropper-targeting" : ""}`;
+  });
+}
+
+document.querySelectorAll(".mini-bg-btn").forEach(btn => {
+  btn.addEventListener("click", () => setPreviewBg(btn.getAttribute("data-bg")));
+});
+document.querySelectorAll(".bg-btn").forEach(btn => {
+  btn.addEventListener("click", () => setPreviewBg(btn.getAttribute("data-bg")));
+});
+
+// ========================
+// 🔤 文字・セリフ設定イベント
+// ========================
+
+function syncTextControlsToActive() {
+  if (filesData.length === 0) return;
+  const item = filesData[activeIndex];
+  if (!item) return;
+
+  const numStr = String(activeIndex + 1).padStart(2, "0");
+  if (textTargetLabel) textTargetLabel.textContent = `#${numStr}`;
+  if (panelTextInput) panelTextInput.value = item.customText || "";
+
+  // Size
+  const size = item.textSize || defaultTextSize;
+  if (textSizeRange) textSizeRange.value = size;
+  if (textSizeVal) textSizeVal.textContent = `${size}px`;
+  document.querySelectorAll(".btn-text-preset").forEach(btn => {
+    btn.classList.toggle("active", parseInt(btn.getAttribute("data-size")) === size);
+  });
+
+  // Color
+  const color = item.textColor || defaultTextColor;
+  document.querySelectorAll(".color-swatch-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-color").toUpperCase() === color.toUpperCase());
+  });
+  if (textColorPicker) textColorPicker.value = color;
+
+  // Position
+  const pos = item.textPos || defaultTextPos;
+  document.querySelectorAll(".btn-pos").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-pos") === pos);
+  });
+
+  // Outline
+  const outline = item.textOutline || defaultTextOutline;
+  document.querySelectorAll(".btn-outline-preset").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-outline") === outline);
+  });
+}
+
+// セリフ入力（パネル）
+panelTextInput.addEventListener("input", (e) => {
+  if (filesData.length === 0) return;
+  const val = e.target.value;
+  filesData[activeIndex].customText = val;
+  const cardInput = document.querySelector(`#card_${activeIndex} input[type="text"]`);
+  if (cardInput) cardInput.value = val;
+  triggerReprocess();
+});
+
+// 文字サイズ スライダー
+textSizeRange.addEventListener("input", (e) => {
+  if (filesData.length === 0) return;
+  const size = parseInt(e.target.value);
+  textSizeVal.textContent = `${size}px`;
+  filesData[activeIndex].textSize = size;
+  defaultTextSize = size;
+  document.querySelectorAll(".btn-text-preset").forEach(btn => {
+    btn.classList.toggle("active", parseInt(btn.getAttribute("data-size")) === size);
+  });
+  triggerReprocess();
+});
+
+// 文字サイズ プリセットボタン
+document.querySelectorAll(".btn-text-preset").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (filesData.length === 0) return;
+    const size = parseInt(btn.getAttribute("data-size"));
+    textSizeRange.value = size;
+    textSizeVal.textContent = `${size}px`;
+    filesData[activeIndex].textSize = size;
+    defaultTextSize = size;
+    document.querySelectorAll(".btn-text-preset").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    triggerReprocess();
+  });
+});
+
+// 文字色 プリセットパレット
+document.querySelectorAll(".color-swatch-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (filesData.length === 0) return;
+    const color = btn.getAttribute("data-color");
+    applyTextColor(color);
+  });
+});
+
+textColorPicker.addEventListener("input", (e) => {
+  if (filesData.length === 0) return;
+  applyTextColor(e.target.value);
+});
+
+function applyTextColor(color) {
+  filesData[activeIndex].textColor = color;
+  defaultTextColor = color;
+
+  // スマートフチ色反転（白文字には黒フチ、濃い文字には白フチ）
+  if (color.toUpperCase() === "#FFFFFF" && filesData[activeIndex].textOutline === "white") {
+    filesData[activeIndex].textOutline = "black";
+    defaultTextOutline = "black";
+  } else if (color.toUpperCase() === "#1E1E1E" && filesData[activeIndex].textOutline === "black") {
+    filesData[activeIndex].textOutline = "white";
+    defaultTextOutline = "white";
+  }
+
+  document.querySelectorAll(".color-swatch-btn").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-color").toUpperCase() === color.toUpperCase());
+  });
+  textColorPicker.value = color;
+
+  const curOutline = filesData[activeIndex].textOutline;
+  document.querySelectorAll(".btn-outline-preset").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-outline") === curOutline);
+  });
+
+  triggerReprocess();
+}
+
+// 文字配置ボタン
+document.querySelectorAll(".btn-pos").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (filesData.length === 0) return;
+    const pos = btn.getAttribute("data-pos");
+    filesData[activeIndex].textPos = pos;
+    defaultTextPos = pos;
+    document.querySelectorAll(".btn-pos").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    triggerReprocess();
+  });
+});
+
+// 文字フチ取りボタン
+document.querySelectorAll(".btn-outline-preset").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (filesData.length === 0) return;
+    const outline = btn.getAttribute("data-outline");
+    filesData[activeIndex].textOutline = outline;
+    defaultTextOutline = outline;
+    document.querySelectorAll(".btn-outline-preset").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    triggerReprocess();
+  });
+});
+
+// すべてのスタンプに文字スタイルを適用
+btnApplyAllTextStyle.addEventListener("click", () => {
+  if (filesData.length === 0) return;
+  const activeItem = filesData[activeIndex];
+  if (!activeItem) return;
+
+  defaultTextSize = activeItem.textSize || 32;
+  defaultTextColor = activeItem.textColor || "#1E1E1E";
+  defaultTextPos = activeItem.textPos || "bottom";
+  defaultTextOutline = activeItem.textOutline || "white";
+
+  filesData.forEach(item => {
+    item.textSize = defaultTextSize;
+    item.textColor = defaultTextColor;
+    item.textPos = defaultTextPos;
+    item.textOutline = defaultTextOutline;
+  });
+
+  triggerReprocess();
+
+  const origText = btnApplyAllTextStyle.textContent;
+  btnApplyAllTextStyle.textContent = "✅ 全スタンプに文字スタイルを適用しました！";
+  btnApplyAllTextStyle.style.borderColor = "var(--line-green)";
+  btnApplyAllTextStyle.style.color = "var(--line-green)";
+  setTimeout(() => {
+    btnApplyAllTextStyle.textContent = origText;
+  }, 1800);
+});
 
 
 
@@ -1024,7 +1496,11 @@ function fastLoadImage(blobOrFile, name, maxDim) {
         scaledCanvas: canvas,
         w: w,
         h: h,
-        customText: ""
+        customText: "",
+        textSize: defaultTextSize,
+        textColor: defaultTextColor,
+        textPos: defaultTextPos,
+        textOutline: defaultTextOutline
       });
     };
 
@@ -1076,6 +1552,7 @@ function renderCards() {
   });
 
   updateLivePreview();
+  syncTextControlsToActive();
 }
 
 // Handle Click on Preview for Eyedropper & Selection
@@ -1112,6 +1589,9 @@ window.handleCardClick = function(event, index) {
 
 window.updateText = function(index, text) {
   filesData[index].customText = text;
+  if (index === activeIndex && panelTextInput) {
+    panelTextInput.value = text;
+  }
   triggerReprocess();
 };
 
@@ -1253,13 +1733,20 @@ function processImageItem(index) {
     workCanvas = fastWhiteOutline(cropCanvas, outlineWidth);
   }
 
-  // 文字入れ
-  if (item.customText && item.customText.trim()) {
-    workCanvas = applyText(workCanvas, item.customText.trim());
-  }
-
   // LINEスタンプ規格 (370 x 320 px)
   const stampCanvas = fitToStandard(workCanvas, 370, 320, margin);
+
+  // 文字入れ（スタンプ全体 370x320 に直接描画し、端切れを防止！）
+  if (item.customText && item.customText.trim()) {
+    applyText(stampCanvas, item.customText.trim(), {
+      size: item.textSize || defaultTextSize,
+      color: item.textColor || defaultTextColor,
+      position: item.textPos || defaultTextPos,
+      outline: item.textOutline || defaultTextOutline,
+      margin: margin
+    });
+  }
+
   item.stampCanvas = stampCanvas;
   item.workCanvas = workCanvas;
 
@@ -1472,31 +1959,89 @@ function fastWhiteOutline(srcCanvas, strokeWidth) {
   return outCanvas;
 }
 
-// Text Overlay
-function applyText(srcCanvas, text) {
-  const w = srcCanvas.width;
-  const h = srcCanvas.height;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
+// Text Overlay (370 x 320 px stamp canvas)
+function applyText(canvas, text, options = {}) {
+  if (!text || !text.trim() || !canvas) return canvas;
+
+  const w = canvas.width;
+  const h = canvas.height;
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(srcCanvas, 0, 0);
 
-  const fontSize = Math.max(20, Math.round(w / 11));
-  ctx.font = `bold ${fontSize}px sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "bottom";
+  let size = options.size || 32;
+  const color = options.color || "#1E1E1E";
+  const position = options.position || "bottom";
+  const outline = options.outline || "white";
+  const margin = options.margin !== undefined ? options.margin : 10;
 
-  const x = w / 2;
-  const y = h - 6;
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length === 0) return canvas;
 
-  ctx.strokeStyle = "#FFFFFF";
-  ctx.lineWidth = Math.max(4, fontSize / 6);
+  const padX = margin + 8;
+  const padY = margin + 8;
+  const availW = w - padX * 2;
+
+  // Auto shrink if any line exceeds availW
+  ctx.font = `900 ${size}px sans-serif`;
+  let maxLineWidth = 0;
+  lines.forEach(l => {
+    const lw = ctx.measureText(l).width;
+    if (lw > maxLineWidth) maxLineWidth = lw;
+  });
+
+  if (maxLineWidth > availW) {
+    const scale = availW / maxLineWidth;
+    size = Math.max(14, Math.floor(size * scale));
+  }
+
+  ctx.font = `900 ${size}px sans-serif`;
   ctx.lineJoin = "round";
-  ctx.strokeText(text, x, y);
+  ctx.miterLimit = 2;
 
-  ctx.fillStyle = "#1E1E1E";
-  ctx.fillText(text, x, y);
+  const lineHeight = Math.round(size * 1.25);
+  const totalHeight = lines.length * lineHeight;
+  const outlineWidth = Math.max(3, Math.round(size / 5));
+
+  // Determine alignment & baseX
+  let align = "center";
+  let baseX = w / 2;
+
+  if (position === "top-left" || position === "left" || position === "bottom-left") {
+    align = "left";
+    baseX = padX;
+  } else if (position === "top-right" || position === "right" || position === "bottom-right") {
+    align = "right";
+    baseX = w - padX;
+  } else {
+    align = "center";
+    baseX = w / 2;
+  }
+
+  // Determine baseY (with textBaseline = "top")
+  let baseY = h - padY - totalHeight; // default bottom
+
+  if (position === "top" || position === "top-left" || position === "top-right") {
+    baseY = padY;
+  } else if (position === "center" || position === "left" || position === "right") {
+    baseY = Math.round((h - totalHeight) / 2);
+  } else {
+    baseY = h - padY - totalHeight;
+  }
+
+  ctx.textAlign = align;
+  ctx.textBaseline = "top";
+
+  lines.forEach((line, i) => {
+    const curY = baseY + i * lineHeight;
+
+    if (outline !== "none") {
+      ctx.strokeStyle = outline === "white" ? "#FFFFFF" : (outline === "black" ? "#000000" : outline);
+      ctx.lineWidth = outlineWidth * 2;
+      ctx.strokeText(line, baseX, curY);
+    }
+
+    ctx.fillStyle = color;
+    ctx.fillText(line, baseX, curY);
+  });
 
   return canvas;
 }
@@ -1560,9 +2105,9 @@ btnZipAll.addEventListener("click", () => {
   });
 
   if (mainTabCheck.checked && filesData.length > 0) {
-    const firstWork = filesData[0].workCanvas;
-    const mainCanvas = fitToStandard(firstWork, 240, 240, 10);
-    const tabCanvas = fitToStandard(firstWork, 96, 74, 4);
+    const firstStamp = filesData[0].stampCanvas;
+    const mainCanvas = fitToStandard(firstStamp, 240, 240, 10);
+    const tabCanvas = fitToStandard(firstStamp, 96, 74, 4);
 
     promises.push(new Promise((resolve) => {
       mainCanvas.toBlob((blob) => {
