@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LINEスタンプ作成スタジオ | スマホ・PC両対応</title>
-  <!-- JSZip & FileSaver for ZIP download -->
+  <title>LINEスタンプ作成スタジオ | スマホ・Mac・Windows両対応</title>
+  <!-- JSZip & FileSaver -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- heic2any for iPhone HEIC images -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
   <style>
     :root {
       --line-green: #06C755;
@@ -27,7 +29,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       background-color: var(--bg-gray);
       color: var(--text-main);
-      padding-bottom: 40px;
+      padding-bottom: 50px;
     }
     header {
       background-color: #ffffff;
@@ -64,6 +66,7 @@
     @media (max-width: 860px) {
       .container {
         grid-template-columns: 1fr;
+        padding: 12px;
       }
     }
     /* Settings Panel */
@@ -106,8 +109,9 @@
     input[type="range"] {
       flex: 1;
       accent-color: var(--line-green);
-      height: 8px;
+      height: 10px;
       cursor: pointer;
+      touch-action: pan-y;
     }
     .slider-val {
       min-width: 36px;
@@ -136,8 +140,8 @@
     input[type="color"] {
       -webkit-appearance: none;
       border: none;
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: 8px;
       cursor: pointer;
       background: none;
@@ -159,14 +163,14 @@
     }
     input[type="checkbox"] {
       accent-color: var(--line-green);
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
     /* Upload & Action Area */
     .main-area {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
     .upload-box {
       background: #ffffff;
@@ -182,12 +186,12 @@
       background: #f0fdf4;
     }
     .upload-icon {
-      font-size: 2.5rem;
+      font-size: 2.8rem;
       margin-bottom: 8px;
     }
     .upload-text {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.05rem;
       color: #334155;
       margin-bottom: 4px;
     }
@@ -198,20 +202,32 @@
     .btn-camera {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 12px;
+      gap: 8px;
+      margin-top: 14px;
       background-color: var(--line-green);
       color: white;
-      padding: 10px 20px;
-      border-radius: 24px;
-      font-size: 0.9rem;
+      padding: 12px 24px;
+      border-radius: 28px;
+      font-size: 0.95rem;
       font-weight: 700;
       border: none;
-      box-shadow: 0 2px 6px rgba(6, 199, 85, 0.3);
+      box-shadow: 0 3px 10px rgba(6, 199, 85, 0.35);
       cursor: pointer;
     }
     .btn-camera:hover {
       background-color: var(--line-dark-green);
+    }
+    /* Loading overlay */
+    #loadingNotice {
+      display: none;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 10px;
     }
     /* View Controls */
     .view-bar {
@@ -228,7 +244,7 @@
     .bg-selector {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-size: 0.85rem;
       font-weight: 600;
     }
@@ -271,7 +287,7 @@
     }
     .stamp-preview-box {
       border-radius: 10px;
-      padding: 14px;
+      padding: 12px;
       text-align: center;
       display: flex;
       align-items: center;
@@ -279,8 +295,9 @@
       min-height: 180px;
       transition: background 0.2s;
     }
-    .stamp-preview-box img {
+    .stamp-preview-box canvas {
       max-width: 100%;
+      height: auto;
       max-height: 160px;
       object-fit: contain;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));
@@ -295,10 +312,10 @@
       background-color: var(--line-green);
       color: white;
       border: none;
-      padding: 10px;
+      padding: 11px;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -358,7 +375,7 @@
 <header>
   <div>
     <div class="header-title">🎨 LINEスタンプ作成スタジオ</div>
-    <div class="header-sub">スマホ・Mac・Windows超高速対応 | 黒線抽出・太さ調整・自動透過</div>
+    <div class="header-sub">スマホ（iPhone/Android）・Mac・Windows完全対応 | 超高速</div>
   </div>
 </header>
 
@@ -381,10 +398,10 @@
     <div class="control-group" id="groupThickness">
       <label>📏 線の太さ調整</label>
       <div class="slider-row">
-        <input type="range" id="thicknessRange" min="-2" max="8" value="2" step="1">
+        <input type="range" id="thicknessRange" min="-2" max="6" value="2" step="1">
         <span class="slider-val" id="thicknessVal">+2</span>
       </div>
-      <div class="control-desc">-2(極細) 〜 0(元線) 〜 +8(太線・くっきり)</div>
+      <div class="control-desc">-2(極細) 〜 0(元線) 〜 +6(太線・くっきり)</div>
     </div>
 
     <!-- Line Color Picker -->
@@ -413,7 +430,7 @@
         <input type="range" id="dustRange" min="0" max="50" value="20" step="5">
         <span class="slider-val" id="dustVal">20</span>
       </div>
-      <div class="control-desc">紙の擦れ・不要な汚れを自動カット</div>
+      <div class="control-desc">紙の擦れ・指紋汚れを自動カット</div>
     </div>
 
     <hr style="border:none; border-top:1px solid var(--border-color); margin: 16px 0;">
@@ -424,12 +441,12 @@
         <input type="checkbox" id="outlineCheck" checked>
         ✨ ステッカー風 白フチをつける
       </label>
-      <div class="control-desc" style="margin-left: 26px;">LINEのダークモードや青い背景で線が沈みません</div>
+      <div class="control-desc" style="margin-left: 28px;">LINEのダークモードや青い背景で線が沈みません</div>
       
-      <div id="outlineSubControls" style="margin-top: 10px; margin-left: 26px;">
+      <div id="outlineSubControls" style="margin-top: 10px; margin-left: 28px;">
         <div class="slider-row" style="margin-bottom: 8px;">
           <span style="font-size:0.8rem; font-weight:600;">太さ:</span>
-          <input type="range" id="outlineWidthRange" min="1" max="10" value="3" step="1">
+          <input type="range" id="outlineWidthRange" min="1" max="8" value="3" step="1">
           <span class="slider-val" id="outlineWidthVal">3px</span>
         </div>
       </div>
@@ -461,19 +478,20 @@
     <div class="upload-box" id="dropZone">
       <div class="upload-icon">📷</div>
       <div class="upload-text">手描きイラスト・写真をタップして選択</div>
-      <div class="upload-hint">またはここにファイルをドラッグ＆ドロップ（複数枚OK: 1〜40枚）</div>
-      <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+      <div class="upload-hint">iPhone/Androidの写真・カメラ撮影・HEIC対応（1〜40枚）</div>
+      <input type="file" id="fileInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none;">
       <div>
         <button class="btn-camera" type="button" onclick="document.getElementById('fileInput').click();">
-          📁 写真・ファイルを選ぶ
+          📁 写真を選ぶ / カメラで撮る
         </button>
       </div>
+      <div id="loadingNotice">⏳ 写真を読み込み・最適化中... しばらくお待ちください</div>
     </div>
 
     <!-- View & Action Bar -->
     <div class="view-bar" id="viewBar" style="display:none;">
       <div class="bg-selector">
-        <span>📱 トーク画面背景:</span>
+        <span>📱 背景:</span>
         <button type="button" class="bg-btn active" data-bg="bg-line-talk">LINE青</button>
         <button type="button" class="bg-btn" data-bg="bg-dark-mode">ダーク</button>
         <button type="button" class="bg-btn" data-bg="bg-white-mode">白</button>
@@ -498,7 +516,8 @@
 // State
 let filesData = [];
 let currentBgClass = "bg-line-talk";
-let renderDebounceTimer = null;
+let isProcessing = false;
+let needsReprocess = false;
 
 // Elements
 const dropZone = document.getElementById("dropZone");
@@ -508,6 +527,7 @@ const viewBar = document.getElementById("viewBar");
 const batchBar = document.getElementById("batchBar");
 const itemCount = document.getElementById("itemCount");
 const btnZipAll = document.getElementById("btnZipAll");
+const loadingNotice = document.getElementById("loadingNotice");
 
 // Sliders
 const modeSelect = document.getElementById("modeSelect");
@@ -526,11 +546,20 @@ const marginRange = document.getElementById("marginRange");
 const marginVal = document.getElementById("marginVal");
 const mainTabCheck = document.getElementById("mainTabCheck");
 
-// Debounced Reprocess
-function scheduleReprocess() {
-  if (renderDebounceTimer) cancelAnimationFrame(renderDebounceTimer);
-  renderDebounceTimer = requestAnimationFrame(() => {
+// High-speed RAF scheduler for smooth 60fps sliders
+function triggerReprocess() {
+  if (isProcessing) {
+    needsReprocess = true;
+    return;
+  }
+  isProcessing = true;
+  requestAnimationFrame(() => {
     reprocessAll();
+    isProcessing = false;
+    if (needsReprocess) {
+      needsReprocess = false;
+      triggerReprocess();
+    }
   });
 }
 
@@ -538,37 +567,37 @@ function scheduleReprocess() {
 thicknessRange.addEventListener("input", (e) => {
   const v = parseInt(e.target.value);
   thicknessVal.textContent = v > 0 ? `+${v}` : v;
-  scheduleReprocess();
+  triggerReprocess();
 });
 sensitivityRange.addEventListener("input", (e) => {
   sensitivityVal.textContent = e.target.value;
-  scheduleReprocess();
+  triggerReprocess();
 });
 dustRange.addEventListener("input", (e) => {
   dustVal.textContent = e.target.value;
-  scheduleReprocess();
+  triggerReprocess();
 });
 outlineWidthRange.addEventListener("input", (e) => {
   outlineWidthVal.textContent = `${e.target.value}px`;
-  scheduleReprocess();
+  triggerReprocess();
 });
 marginRange.addEventListener("input", (e) => {
   marginVal.textContent = `${e.target.value}px`;
-  scheduleReprocess();
+  triggerReprocess();
 });
 outlineCheck.addEventListener("change", () => {
   document.getElementById("outlineSubControls").style.display = outlineCheck.checked ? "block" : "none";
-  scheduleReprocess();
+  triggerReprocess();
 });
 modeSelect.addEventListener("change", () => {
   const isLine = modeSelect.value === "line";
   document.getElementById("groupThickness").style.display = isLine ? "block" : "none";
   document.getElementById("groupLineColor").style.display = isLine ? "block" : "none";
-  scheduleReprocess();
+  triggerReprocess();
 });
 lineColorPicker.addEventListener("input", (e) => {
   lineColorHex.textContent = e.target.value;
-  scheduleReprocess();
+  triggerReprocess();
 });
 
 // Background Simulator Toggles
@@ -599,63 +628,104 @@ fileInput.addEventListener("change", (e) => {
   if (e.target.files.length) handleFiles(e.target.files);
 });
 
-// Load and PRE-SCALE Files for Ultra Fast Processing
-function handleFiles(files) {
-  const promises = [];
-  const maxDim = 800; // スマホ巨大画像を800pxにプレスケール（高速化の肝！）
+// Safe File Loader with HEIC conversion & ObjectURL (No Memory Leak!)
+async function handleFiles(files) {
+  if (!files || files.length === 0) return;
+  loadingNotice.style.display = "block";
+
+  const targetMaxDim = 520; // 370x320スタンプに完全最適な軽量解像度（超爆速化！）
+  const newItems = [];
 
   for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    if (!file.type.match("image.*")) continue;
-    promises.push(new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // Pre-scale down to max 800px to ensure ultra-smooth performance
-          let w = img.naturalWidth;
-          let h = img.naturalHeight;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) {
-              h = Math.round((h * maxDim) / w);
-              w = maxDim;
-            } else {
-              w = Math.round((w * maxDim) / h);
-              h = maxDim;
-            }
-          }
-          const scaleCanvas = document.createElement("canvas");
-          scaleCanvas.width = w;
-          scaleCanvas.height = h;
-          const ctx = scaleCanvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, w, h);
+    let file = files[i];
+    const fileName = file.name || `stamp_${Date.now()}`;
+    const isHeic = fileName.toLowerCase().endsWith(".heic") || fileName.toLowerCase().endsWith(".heif") || (file.type && file.type.includes("heic"));
 
-          resolve({
-            name: file.name,
-            scaledCanvas: scaleCanvas,
-            w: w,
-            h: h,
-            customText: ""
-          });
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }));
+    // iPhone HEIC 変換
+    if (isHeic && typeof heic2any !== "undefined") {
+      try {
+        const converted = await heic2any({
+          blob: file,
+          toType: "image/jpeg",
+          quality: 0.85
+        });
+        file = Array.isArray(converted) ? converted[0] : converted;
+      } catch (err) {
+        console.warn("HEIC conversion failed, fallback:", err);
+      }
+    }
+
+    try {
+      const item = await loadImageDirect(file, fileName, targetMaxDim);
+      if (item) newItems.push(item);
+    } catch (err) {
+      console.error("Image load error:", err);
+    }
   }
 
-  Promise.all(promises).then((loaded) => {
-    filesData = loaded;
-    if (filesData.length > 0) {
-      viewBar.style.display = "flex";
-      batchBar.style.display = "flex";
-      itemCount.textContent = `全 ${filesData.length} 枚`;
-      renderCards();
-    }
+  loadingNotice.style.display = "none";
+
+  if (newItems.length > 0) {
+    filesData = newItems;
+    viewBar.style.display = "flex";
+    batchBar.style.display = "flex";
+    itemCount.textContent = `全 ${filesData.length} 枚`;
+    renderCards();
+  }
+}
+
+// Memory-efficient image loader using ObjectURL (ゼロコピー高速読み込み)
+function loadImageDirect(blobOrFile, name, maxDim) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(blobOrFile);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl); // メモリ即座解放
+
+      let w = img.naturalWidth || img.width;
+      let h = img.naturalHeight || img.height;
+      if (!w || !h) {
+        reject(new Error("Invalid image size"));
+        return;
+      }
+
+      // スマホの巨大写真を520pxにプレスケール
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, w, h);
+
+      resolve({
+        name: name,
+        scaledCanvas: canvas,
+        w: w,
+        h: h,
+        customText: ""
+      });
+    };
+
+    img.onerror = (e) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(e);
+    };
+
+    img.src = objectUrl;
   });
 }
 
-// Render cards and kick off processing
+// Render cards
 function renderCards() {
   stampsGrid.innerHTML = "";
   filesData.forEach((item, index) => {
@@ -672,9 +742,7 @@ function renderCards() {
       <div>
         <input type="text" placeholder="追加テキスト・セリフ（任意）" value="${item.customText}" oninput="updateText(${index}, this.value)" style="font-size:0.85rem; padding:6px 10px;">
       </div>
-      <div class="stamp-preview-box ${currentBgClass}" id="previewBox_${index}">
-        <span style="color:#888; font-size:0.85rem;">処理中...</span>
-      </div>
+      <div class="stamp-preview-box ${currentBgClass}" id="previewBox_${index}"></div>
       <div class="stamp-info">最大370×320 px | 偶数px | 透過PNG</div>
       <button class="btn-save" onclick="downloadSingle(${index})">
         💾 ${numStr}.png を保存
@@ -687,16 +755,16 @@ function renderCards() {
 
 window.updateText = function(index, text) {
   filesData[index].customText = text;
-  scheduleReprocess();
+  triggerReprocess();
 };
 
 function reprocessAll() {
-  filesData.forEach((_, index) => {
-    processImageItem(index);
-  });
+  for (let i = 0; i < filesData.length; i++) {
+    processImageItem(i);
+  }
 }
 
-// High Speed Image Processing in Browser Canvas
+// High Speed Image Processing with Canvas (0ミリ秒 GPUプレビュー)
 function processImageItem(index) {
   const item = filesData[index];
   if (!item || !item.scaledCanvas) return;
@@ -724,15 +792,15 @@ function processImageItem(index) {
   let mask = new Uint8ClampedArray(w * h);
 
   if (mode === "line") {
-    // 高速照明均一化 ＆ 黒線抽出
-    // 全体の平均明度を高速サンプリング (1/4ステップ)
+    // 高速照明均一化 & サンプリング
     let sampleSum = 0;
     let sampleCnt = 0;
-    for (let i = 0; i < d.length; i += 16) {
+    const step = 8;
+    for (let i = 0; i < d.length; i += step * 4) {
       sampleSum += 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
       sampleCnt++;
     }
-    const avgLum = sampleSum / sampleCnt;
+    const avgLum = sampleCnt > 0 ? (sampleSum / sampleCnt) : 128;
     const norm = 200.0 / Math.max(60, avgLum);
     const thresh = 255 - sensitivity;
 
@@ -761,7 +829,7 @@ function processImageItem(index) {
     }
   }
 
-  // 高速な線の太さ調整 (Separable 1D Dilation / Erosion: 計算量O(2R)で激速！)
+  // 高速な線の太さ調整 (1D Separable Filter)
   if (mode === "line" && thickness !== 0) {
     mask = fastStrokeAdjust(mask, w, h, thickness);
   }
@@ -792,7 +860,7 @@ function processImageItem(index) {
   const cropW = maxX - minX + 1;
   const cropH = maxY - minY + 1;
 
-  // クロップ後キャンバスの生成
+  // クロップ後キャンバス
   const cropCanvas = document.createElement("canvas");
   cropCanvas.width = cropW;
   cropCanvas.height = cropH;
@@ -824,7 +892,7 @@ function processImageItem(index) {
   }
   cropCtx.putImageData(cropData, 0, 0);
 
-  // 白フチ付加（高速シャドウ合成）
+  // 白フチ付加
   let workCanvas = cropCanvas;
   if (useOutline && outlineWidth > 0) {
     workCanvas = fastWhiteOutline(cropCanvas, outlineWidth);
@@ -838,18 +906,19 @@ function processImageItem(index) {
   // LINEスタンプ規格 (370 x 320 px)
   const stampCanvas = fitToStandard(workCanvas, 370, 320, margin);
   item.stampCanvas = stampCanvas;
-  item.mainCanvas = fitToStandard(workCanvas, 240, 240, 10);
-  item.tabCanvas = fitToStandard(workCanvas, 96, 74, 4);
+  item.workCanvas = workCanvas; // main / tab 用に保持
 
-  // プレビュー反映
+  // 【最重要】PNG Base64エンコードを行わず、Canvasを直接DOMに表示！（超爆速化・CPU消費ゼロ！）
   const previewBox = document.getElementById(`previewBox_${index}`);
   if (previewBox) {
-    const dataUrl = stampCanvas.toDataURL("image/png");
-    previewBox.innerHTML = `<img src="${dataUrl}" alt="Stamp ${index + 1}">`;
+    if (previewBox.firstChild !== stampCanvas) {
+      previewBox.innerHTML = "";
+      previewBox.appendChild(stampCanvas);
+    }
   }
 }
 
-// 超高速 1D Separable Dilation/Erosion (数ミリ秒で完了！)
+// 超高速 1D Separable Dilation/Erosion
 function fastStrokeAdjust(src, w, h, thickness) {
   const r = Math.abs(thickness);
   if (r === 0) return src;
@@ -858,7 +927,6 @@ function fastStrokeAdjust(src, w, h, thickness) {
   const out = new Uint8ClampedArray(w * h);
 
   if (thickness > 0) {
-    // 1. 水平方向 Dilation
     for (let y = 0; y < h; y++) {
       const row = y * w;
       for (let x = 0; x < w; x++) {
@@ -872,7 +940,6 @@ function fastStrokeAdjust(src, w, h, thickness) {
         temp[row + x] = maxV;
       }
     }
-    // 2. 垂直方向 Dilation
     for (let x = 0; x < w; x++) {
       for (let y = 0; y < h; y++) {
         let maxV = 0;
@@ -886,7 +953,6 @@ function fastStrokeAdjust(src, w, h, thickness) {
       }
     }
   } else {
-    // Erosion
     for (let y = 0; y < h; y++) {
       const row = y * w;
       for (let x = 0; x < w; x++) {
@@ -916,7 +982,7 @@ function fastStrokeAdjust(src, w, h, thickness) {
   return out;
 }
 
-// 高速 白フチ（ステッカー風アウトライン）
+// 高速 白フチ
 function fastWhiteOutline(srcCanvas, strokeWidth) {
   const sw = srcCanvas.width;
   const sh = srcCanvas.height;
@@ -928,7 +994,6 @@ function fastWhiteOutline(srcCanvas, strokeWidth) {
   outCanvas.height = outH;
   const ctx = outCanvas.getContext("2d");
 
-  // 8方向のみに配置（従来の64回から8回に激減！）
   ctx.shadowColor = "#FFFFFF";
   ctx.shadowBlur = strokeWidth;
 
@@ -942,12 +1007,10 @@ function fastWhiteOutline(srcCanvas, strokeWidth) {
     ctx.drawImage(srcCanvas, strokeWidth + offsets[i][0], strokeWidth + offsets[i][1]);
   }
 
-  // 輪郭を白で塗りつぶす
   ctx.globalCompositeOperation = "source-in";
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, outW, outH);
 
-  // 原画を中央に重ねる
   ctx.globalCompositeOperation = "source-over";
   ctx.drawImage(srcCanvas, strokeWidth, strokeWidth);
 
@@ -964,13 +1027,13 @@ function applyText(srcCanvas, text) {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(srcCanvas, 0, 0);
 
-  const fontSize = Math.max(22, Math.round(w / 10));
+  const fontSize = Math.max(20, Math.round(w / 11));
   ctx.font = `bold ${fontSize}px sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
 
   const x = w / 2;
-  const y = h - 8;
+  const y = h - 6;
 
   ctx.strokeStyle = "#FFFFFF";
   ctx.lineWidth = Math.max(4, fontSize / 6);
@@ -983,7 +1046,7 @@ function applyText(srcCanvas, text) {
   return canvas;
 }
 
-// Fit to LINE Stamp standard (Even dimensions, centered, transparent)
+// Fit to LINE Stamp standard (370 x 320 px)
 function fitToStandard(srcCanvas, targetW, targetH, margin) {
   const availW = Math.max(10, targetW - margin * 2);
   const availH = Math.max(10, targetH - margin * 2);
@@ -1030,17 +1093,34 @@ btnZipAll.addEventListener("click", () => {
   const zip = new JSZip();
   const folder = zip.folder("stamps");
 
+  const promises = [];
   filesData.forEach((item, index) => {
     const numStr = String(index + 1).padStart(2, "0");
-    const dataUrl = item.stampCanvas.toDataURL("image/png");
-    folder.file(`${numStr}.png`, dataUrl.split(",")[1], { base64: true });
+    promises.push(new Promise((resolve) => {
+      item.stampCanvas.toBlob((blob) => {
+        folder.file(`${numStr}.png`, blob);
+        resolve();
+      }, "image/png");
+    }));
   });
 
   if (mainTabCheck.checked && filesData.length > 0) {
-    const mainUrl = filesData[0].mainCanvas.toDataURL("image/png");
-    const tabUrl = filesData[0].tabCanvas.toDataURL("image/png");
-    folder.file("main.png", mainUrl.split(",")[1], { base64: true });
-    folder.file("tab.png", tabUrl.split(",")[1], { base64: true });
+    const firstWork = filesData[0].workCanvas;
+    const mainCanvas = fitToStandard(firstWork, 240, 240, 10);
+    const tabCanvas = fitToStandard(firstWork, 96, 74, 4);
+
+    promises.push(new Promise((resolve) => {
+      mainCanvas.toBlob((blob) => {
+        folder.file("main.png", blob);
+        resolve();
+      }, "image/png");
+    }));
+    promises.push(new Promise((resolve) => {
+      tabCanvas.toBlob((blob) => {
+        folder.file("tab.png", blob);
+        resolve();
+      }, "image/png");
+    }));
   }
 
   const readme = `LINEクリエイターズマーケット スタンプセット
@@ -1056,8 +1136,10 @@ btnZipAll.addEventListener("click", () => {
 `;
   folder.file("README.txt", readme);
 
-  zip.generateAsync({ type: "blob" }).then((content) => {
-    saveAs(content, "LINEスタンプセット.zip");
+  Promise.all(promises).then(() => {
+    zip.generateAsync({ type: "blob" }).then((content) => {
+      saveAs(content, "LINEスタンプセット.zip");
+    });
   });
 });
 </script>
