@@ -7,7 +7,7 @@
   <!-- JSZip & FileSaver -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <!-- heic2any for fallback if needed -->
+  <!-- heic2any fallback -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
   <style>
     :root {
@@ -29,7 +29,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       background-color: var(--bg-gray);
       color: var(--text-main);
-      padding-bottom: 50px;
+      padding-bottom: 60px;
     }
     header {
       background-color: #ffffff;
@@ -132,26 +132,69 @@
     input[type="text"]:focus, select:focus {
       border-color: var(--line-green);
     }
-    .color-picker-row {
+    /* Eyedropper UI */
+    .eyedropper-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+    .btn-eyedropper {
+      width: 100%;
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      color: #334155;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-eyedropper:hover {
+      border-color: var(--line-green);
+      color: var(--line-green);
+    }
+    .btn-eyedropper.active {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #dc2626;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    .picked-color-display {
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-top: 10px;
     }
-    input[type="color"] {
-      -webkit-appearance: none;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      cursor: pointer;
+    .color-swatch-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
+    }
+    .btn-reset-color {
       background: none;
-    }
-    input[type="color"]::-webkit-color-swatch-wrapper {
-      padding: 0;
-    }
-    input[type="color"]::-webkit-color-swatch {
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .btn-reset-color:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
     }
     .checkbox-label {
       display: flex;
@@ -217,6 +260,23 @@
     .btn-camera:hover {
       background-color: var(--line-dark-green);
     }
+    /* Toast banner for eyedropper */
+    #eyedropperToast {
+      display: none;
+      position: fixed;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(17, 24, 39, 0.92);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      backdrop-filter: blur(4px);
+    }
     /* View Controls */
     .view-bar {
       display: flex;
@@ -265,6 +325,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      position: relative;
     }
     .stamp-header {
       display: flex;
@@ -282,6 +343,12 @@
       justify-content: center;
       min-height: 180px;
       transition: background 0.2s;
+      position: relative;
+      user-select: none;
+    }
+    .stamp-preview-box.eyedropper-targeting {
+      cursor: crosshair !important;
+      outline: 2px dashed #ef4444;
     }
     .stamp-preview-box canvas {
       max-width: 100%;
@@ -363,9 +430,12 @@
 <header>
   <div>
     <div class="header-title">🎨 LINEスタンプ作成スタジオ</div>
-    <div class="header-sub">スマホ（iPhone/Android）・Mac・Windows完全対応 | 超爆速</div>
+    <div class="header-sub">スポイト透過・中の白保護・スマホ超高速対応</div>
   </div>
 </header>
+
+<!-- Toast for Eyedropper -->
+<div id="eyedropperToast">🎯 画像の「透明にしたい背景」をタップしてください</div>
 
 <div class="container">
   <!-- Settings Panel -->
@@ -376,12 +446,51 @@
     <div class="control-group">
       <label>🔮 透過・切り抜きモード</label>
       <select id="modeSelect">
-        <option value="outer_white" selected>🛡️ 外側の背景白のみ切り抜き（中の白を保護！）</option>
+        <option value="outer_color" selected>🛡️ 外側背景のみ切り抜き（中の白を保護！）</option>
+        <option value="all_color">🎨 指定色をすべて透過（全画面）</option>
         <option value="line">✍️ 手描き黒線抽出 ＆ 太さ調整</option>
-        <option value="paper">📝 全白透過（水彩・カラーペン向け）</option>
-        <option value="none">📐 透過なし（リサイズ・成形のみ）</option>
+        <option value="none">📐 透過なし（リサイズのみ）</option>
       </select>
-      <div class="control-desc" id="modeDesc">イラストの白目や服の白を残し、外側の紙の白だけを透明にします</div>
+      <div class="control-desc" id="modeDesc">イラストの白目や服を残し、スポイトで選んだ外側の紙色だけを透明にします</div>
+    </div>
+
+    <!-- Eyedropper Section -->
+    <div class="control-group" id="groupEyedropper">
+      <label>🎯 透過したい色（スポイトツール）</label>
+      <div class="eyedropper-box">
+        <button type="button" class="btn-eyedropper" id="btnEyedropper">
+          <span>🎯 スポイトで画像をタップして色を選ぶ</span>
+        </button>
+        <div class="picked-color-display">
+          <div class="color-swatch-box" id="colorSwatch" style="background-color: #FFFFFF;"></div>
+          <div style="flex:1;">
+            <div id="colorHexText" style="font-weight:bold; font-size:0.85rem;">#FFFFFF (白)</div>
+            <div id="colorRgbText" style="font-size:0.75rem; color:var(--text-sub);">R:255 G:255 B:255</div>
+          </div>
+          <button type="button" class="btn-reset-color" id="btnResetWhite">白にリセット</button>
+        </div>
+      </div>
+      <div class="control-desc">写真の紙が黄色やグレーっぽくても、タップした色を透明化できます</div>
+    </div>
+
+    <!-- Color Tolerance Slider -->
+    <div class="control-group" id="groupTolerance">
+      <label>🔍 色の許容範囲（色のズレ・影の許容度）</label>
+      <div class="slider-row">
+        <input type="range" id="toleranceRange" min="5" max="100" value="40" step="2">
+        <span class="slider-val" id="toleranceVal">40</span>
+      </div>
+      <div class="control-desc">値を上げると、照明ムラや薄い影の色の差もまとめて透明にします</div>
+    </div>
+
+    <!-- Leak Guard Slider -->
+    <div class="control-group" id="groupLeakGuard">
+      <label>🛡️ 線の隙間ガード（中身の保護）</label>
+      <div class="slider-row">
+        <input type="range" id="leakGuardRange" min="0" max="4" value="2" step="1">
+        <span class="slider-val" id="leakGuardVal">2px</span>
+      </div>
+      <div class="control-desc">手描き線の切れ目から外の透明が入り込むのを防止</div>
     </div>
 
     <!-- Line Thickness Slider (Visible for line mode) -->
@@ -392,35 +501,6 @@
         <span class="slider-val" id="thicknessVal">+2</span>
       </div>
       <div class="control-desc">-2(極細) 〜 0(元線) 〜 +6(太線・くっきり)</div>
-    </div>
-
-    <!-- Line Color Picker (Visible for line mode) -->
-    <div class="control-group" id="groupLineColor" style="display:none;">
-      <label>🎨 線の色</label>
-      <div class="color-picker-row">
-        <input type="color" id="lineColorPicker" value="#000000">
-        <span id="lineColorHex" style="font-size:0.85rem; font-weight:bold;">#000000 (黒)</span>
-      </div>
-    </div>
-
-    <!-- Sensitivity Slider -->
-    <div class="control-group">
-      <label id="lblSensitivity">🔍 背景と判定する白さ（感度）</label>
-      <div class="slider-row">
-        <input type="range" id="sensitivityRange" min="50" max="180" value="110" step="5">
-        <span class="slider-val" id="sensitivityVal">110</span>
-      </div>
-      <div class="control-desc">暗い部屋で撮った紙でも、数値を上げると白として抜けます</div>
-    </div>
-
-    <!-- Leak Guard Slider (Visible for outer_white) -->
-    <div class="control-group" id="groupLeakGuard">
-      <label>🛡️ 線の隙間ガード（中身の保護）</label>
-      <div class="slider-row">
-        <input type="range" id="leakGuardRange" min="0" max="4" value="2" step="1">
-        <span class="slider-val" id="leakGuardVal">2px</span>
-      </div>
-      <div class="control-desc">手描き線の切れ目から外の透明が入り込むのを防ぎます</div>
     </div>
 
     <hr style="border:none; border-top:1px solid var(--border-color); margin: 16px 0;">
@@ -468,7 +548,7 @@
     <div class="upload-box" id="dropZone">
       <div class="upload-icon">📷</div>
       <div class="upload-text">手描きイラスト・写真をタップして選択</div>
-      <div class="upload-hint">iPhone/Androidのカメラ・写真・アルバムから一瞬で読み込み（1〜40枚）</div>
+      <div class="upload-hint">iPhone/Androidのカメラ・アルバムから一瞬で読み込み（1〜40枚）</div>
       <input type="file" id="fileInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none;">
       <div>
         <button class="btn-camera" type="button" onclick="document.getElementById('fileInput').click();">
@@ -508,6 +588,10 @@ let currentBgClass = "bg-line-talk";
 let isProcessing = false;
 let needsReprocess = false;
 
+// Eyedropper State
+let isEyedropperActive = false;
+let targetColor = { r: 255, g: 255, b: 255 }; // Default pure white
+
 // Elements
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
@@ -516,29 +600,35 @@ const viewBar = document.getElementById("viewBar");
 const batchBar = document.getElementById("batchBar");
 const itemCount = document.getElementById("itemCount");
 const btnZipAll = document.getElementById("btnZipAll");
+const eyedropperToast = document.getElementById("eyedropperToast");
 
-// Sliders & Controls
+// Controls
 const modeSelect = document.getElementById("modeSelect");
 const modeDesc = document.getElementById("modeDesc");
+const groupEyedropper = document.getElementById("groupEyedropper");
+const groupTolerance = document.getElementById("groupTolerance");
 const groupThickness = document.getElementById("groupThickness");
-const groupLineColor = document.getElementById("groupLineColor");
 const groupLeakGuard = document.getElementById("groupLeakGuard");
+const btnEyedropper = document.getElementById("btnEyedropper");
+const colorSwatch = document.getElementById("colorSwatch");
+const colorHexText = document.getElementById("colorHexText");
+const colorRgbText = document.getElementById("colorRgbText");
+const btnResetWhite = document.getElementById("btnResetWhite");
+
+const toleranceRange = document.getElementById("toleranceRange");
+const toleranceVal = document.getElementById("toleranceVal");
 const thicknessRange = document.getElementById("thicknessRange");
 const thicknessVal = document.getElementById("thicknessVal");
-const sensitivityRange = document.getElementById("sensitivityRange");
-const sensitivityVal = document.getElementById("sensitivityVal");
 const leakGuardRange = document.getElementById("leakGuardRange");
 const leakGuardVal = document.getElementById("leakGuardVal");
 const outlineCheck = document.getElementById("outlineCheck");
 const outlineWidthRange = document.getElementById("outlineWidthRange");
 const outlineWidthVal = document.getElementById("outlineWidthVal");
-const lineColorPicker = document.getElementById("lineColorPicker");
-const lineColorHex = document.getElementById("lineColorHex");
 const marginRange = document.getElementById("marginRange");
 const marginVal = document.getElementById("marginVal");
 const mainTabCheck = document.getElementById("mainTabCheck");
 
-// High-speed RAF scheduler for smooth 60fps sliders
+// High-speed RAF scheduler for smooth 60fps
 function triggerReprocess() {
   if (isProcessing) {
     needsReprocess = true;
@@ -555,41 +645,83 @@ function triggerReprocess() {
   });
 }
 
-// UI Mode Switch
+// Eyedropper Toggle
+btnEyedropper.addEventListener("click", () => {
+  toggleEyedropper(!isEyedropperActive);
+});
+
+function toggleEyedropper(active) {
+  isEyedropperActive = active;
+  if (isEyedropperActive) {
+    btnEyedropper.classList.add("active");
+    btnEyedropper.querySelector("span").textContent = "❌ タップ待機中... 画像をタップ";
+    eyedropperToast.style.display = "block";
+    document.querySelectorAll(".stamp-preview-box").forEach(box => {
+      box.classList.add("eyedropper-targeting");
+    });
+  } else {
+    btnEyedropper.classList.remove("active");
+    btnEyedropper.querySelector("span").textContent = "🎯 スポイトで画像をタップして色を選ぶ";
+    eyedropperToast.style.display = "none";
+    document.querySelectorAll(".stamp-preview-box").forEach(box => {
+      box.classList.remove("eyedropper-targeting");
+    });
+  }
+}
+
+// Reset to white
+btnResetWhite.addEventListener("click", () => {
+  setTargetColor(255, 255, 255);
+});
+
+function setTargetColor(r, g, b) {
+  targetColor = { r, g, b };
+  const hex = "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
+  colorSwatch.style.backgroundColor = hex;
+  colorHexText.textContent = `${hex} ${hex === "#FFFFFF" ? "(白)" : ""}`;
+  colorRgbText.textContent = `R:${r} G:${g} B:${b}`;
+  triggerReprocess();
+}
+
+// Mode Selection Change
 modeSelect.addEventListener("change", () => {
   const mode = modeSelect.value;
-  if (mode === "outer_white") {
-    groupThickness.style.display = "none";
-    groupLineColor.style.display = "none";
+  if (mode === "outer_color") {
+    groupEyedropper.style.display = "block";
+    groupTolerance.style.display = "block";
     groupLeakGuard.style.display = "block";
-    modeDesc.textContent = "イラストの白目や服の白を残し、外側の紙の白だけを透明にします";
+    groupThickness.style.display = "none";
+    modeDesc.textContent = "イラストの白目や服を残し、スポイトで選んだ外側の紙色だけを透明にします";
+  } else if (mode === "all_color") {
+    groupEyedropper.style.display = "block";
+    groupTolerance.style.display = "block";
+    groupLeakGuard.style.display = "none";
+    groupThickness.style.display = "none";
+    modeDesc.textContent = "画像全体から、スポイトで選んだ色と同系統の色をすべて透明にします";
   } else if (mode === "line") {
+    groupEyedropper.style.display = "none";
+    groupTolerance.style.display = "none";
+    groupLeakGuard.style.display = "none";
     groupThickness.style.display = "block";
-    groupLineColor.style.display = "block";
-    groupLeakGuard.style.display = "none";
     modeDesc.textContent = "黒い線画のみを抽出し、太さを自由に変更します";
-  } else if (mode === "paper") {
-    groupThickness.style.display = "none";
-    groupLineColor.style.display = "none";
-    groupLeakGuard.style.display = "none";
-    modeDesc.textContent = "画像全体の白に近い色をすべて透明にします";
   } else {
-    groupThickness.style.display = "none";
-    groupLineColor.style.display = "none";
+    groupEyedropper.style.display = "none";
+    groupTolerance.style.display = "none";
     groupLeakGuard.style.display = "none";
+    groupThickness.style.display = "none";
     modeDesc.textContent = "透過を行わず、サイズ成形のみを行います";
   }
   triggerReprocess();
 });
 
-// UI Slider Listeners
+// Slider Listeners
+toleranceRange.addEventListener("input", (e) => {
+  toleranceVal.textContent = e.target.value;
+  triggerReprocess();
+});
 thicknessRange.addEventListener("input", (e) => {
   const v = parseInt(e.target.value);
   thicknessVal.textContent = v > 0 ? `+${v}` : v;
-  triggerReprocess();
-});
-sensitivityRange.addEventListener("input", (e) => {
-  sensitivityVal.textContent = e.target.value;
   triggerReprocess();
 });
 leakGuardRange.addEventListener("input", (e) => {
@@ -608,10 +740,6 @@ outlineCheck.addEventListener("change", () => {
   document.getElementById("outlineSubControls").style.display = outlineCheck.checked ? "block" : "none";
   triggerReprocess();
 });
-lineColorPicker.addEventListener("input", (e) => {
-  lineColorHex.textContent = e.target.value;
-  triggerReprocess();
-});
 
 // Background Simulator Toggles
 document.querySelectorAll(".bg-btn").forEach(btn => {
@@ -620,7 +748,7 @@ document.querySelectorAll(".bg-btn").forEach(btn => {
     btn.classList.add("active");
     currentBgClass = btn.getAttribute("data-bg");
     document.querySelectorAll(".stamp-preview-box").forEach(box => {
-      box.className = `stamp-preview-box ${currentBgClass}`;
+      box.className = `stamp-preview-box ${currentBgClass} ${isEyedropperActive ? "eyedropper-targeting" : ""}`;
     });
   });
 });
@@ -641,11 +769,11 @@ fileInput.addEventListener("change", (e) => {
   if (e.target.files.length) handleFiles(e.target.files);
 });
 
-// 超高速画像ローダー（iPhoneネイティブ即時デコード ＋ フォールバック）
+// Fast Image Loader (iPhone native zero-copy)
 async function handleFiles(files) {
   if (!files || files.length === 0) return;
 
-  const targetMaxDim = 500; // 370x320スタンプに最適（スマホで超爆速）
+  const targetMaxDim = 500;
   const newItems = [];
 
   for (let i = 0; i < files.length; i++) {
@@ -655,8 +783,6 @@ async function handleFiles(files) {
       const item = await fastLoadImage(file, fileName, targetMaxDim);
       if (item) newItems.push(item);
     } catch (err) {
-      console.warn("Direct load failed, trying HEIC fallback:", err);
-      // 万一ネイティブで開けなかった場合のみ heic2any を呼び出す
       if (typeof heic2any !== "undefined") {
         try {
           const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
@@ -664,7 +790,7 @@ async function handleFiles(files) {
           const item = await fastLoadImage(blob, fileName, targetMaxDim);
           if (item) newItems.push(item);
         } catch (e) {
-          console.error("HEIC fallback also failed:", e);
+          console.error("HEIC fallback error:", e);
         }
       }
     }
@@ -679,7 +805,6 @@ async function handleFiles(files) {
   }
 }
 
-// iPhoneでも0.05秒で動くネイティブゼロコピー画像デコーダー
 function fastLoadImage(blobOrFile, name, maxDim) {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(blobOrFile);
@@ -694,7 +819,6 @@ function fastLoadImage(blobOrFile, name, maxDim) {
         return;
       }
 
-      // 長辺 500px に縮小（メモリ消費極小・超高速！）
       if (w > maxDim || h > maxDim) {
         if (w > h) {
           h = Math.round((h * maxDim) / w);
@@ -746,7 +870,7 @@ function renderCards() {
       <div>
         <input type="text" placeholder="追加テキスト・セリフ（任意）" value="${item.customText}" oninput="updateText(${index}, this.value)" style="font-size:0.85rem; padding:6px 10px;">
       </div>
-      <div class="stamp-preview-box ${currentBgClass}" id="previewBox_${index}"></div>
+      <div class="stamp-preview-box ${currentBgClass} ${isEyedropperActive ? "eyedropper-targeting" : ""}" id="previewBox_${index}" onclick="handleCardClick(event, ${index})"></div>
       <div class="stamp-info">最大370×320 px | 偶数px | 透過PNG</div>
       <button class="btn-save" onclick="downloadSingle(${index})">
         💾 ${numStr}.png を保存
@@ -756,6 +880,43 @@ function renderCards() {
     processImageItem(index);
   });
 }
+
+// Handle Click on Preview for Eyedropper
+window.handleCardClick = function(event, index) {
+  if (!isEyedropperActive) return;
+  event.preventDefault();
+  event.stopPropagation();
+
+  const item = filesData[index];
+  if (!item || !item.scaledCanvas) return;
+
+  const box = document.getElementById(`previewBox_${index}`);
+  const canvas = box.querySelector("canvas");
+  if (!canvas) return;
+
+  // Calculate coordinates relative to canvas
+  const rect = canvas.getBoundingClientRect();
+  const clickX = event.clientX - rect.left;
+  const clickY = event.clientY - rect.top;
+
+  if (clickX >= 0 && clickX <= rect.width && clickY >= 0 && clickY <= rect.height) {
+    // Map click to original scaledCanvas coords
+    const normX = clickX / rect.width;
+    const normY = clickY / rect.height;
+
+    const srcW = item.w;
+    const srcH = item.h;
+    const px = Math.min(srcW - 1, Math.max(0, Math.floor(normX * srcW)));
+    const py = Math.min(srcH - 1, Math.max(0, Math.floor(normY * srcH)));
+
+    // Pick pixel color from source scaledCanvas
+    const sCtx = item.scaledCanvas.getContext("2d", { willReadFrequently: true });
+    const pData = sCtx.getImageData(px, py, 1, 1).data;
+
+    setTargetColor(pData[0], pData[1], pData[2]);
+    toggleEyedropper(false); // Turn off after picking
+  }
+};
 
 window.updateText = function(index, text) {
   filesData[index].customText = text;
@@ -768,7 +929,7 @@ function reprocessAll() {
   }
 }
 
-// Core Image Processing (Outer White Cut, Black Line Extract, Full White Cut)
+// High Speed Image Processing
 function processImageItem(index) {
   const item = filesData[index];
   if (!item || !item.scaledCanvas) return;
@@ -776,17 +937,12 @@ function processImageItem(index) {
   const w = item.w;
   const h = item.h;
   const mode = modeSelect.value;
+  const tolerance = parseInt(toleranceRange.value);
   const thickness = parseInt(thicknessRange.value);
-  const sensitivity = parseInt(sensitivityRange.value);
   const leakGuard = parseInt(leakGuardRange.value);
   const useOutline = outlineCheck.checked;
   const outlineWidth = parseInt(outlineWidthRange.value);
   const margin = parseInt(marginRange.value);
-
-  const hex = lineColorPicker.value;
-  const lr = parseInt(hex.slice(1, 3), 16);
-  const lg = parseInt(hex.slice(3, 5), 16);
-  const lb = parseInt(hex.slice(5, 7), 16);
 
   const ctx = item.scaledCanvas.getContext("2d", { willReadFrequently: true });
   const imgData = ctx.getImageData(0, 0, w, h);
@@ -795,20 +951,35 @@ function processImageItem(index) {
   // Mask Buffer (0: Transparent, 255: Opaque)
   let mask = new Uint8ClampedArray(w * h);
 
-  if (mode === "outer_white") {
-    // ★【外側の背景白のみ切り抜き（中の白を完全保護！）】★
-    mask = floodFillOuterBackground(d, w, h, sensitivity, leakGuard);
+  if (mode === "outer_color") {
+    // 🛡️ 【外側背景のみ切り抜き（中の白を保護 ＆ スポイト色対応！）】
+    mask = floodFillOuterByColor(d, w, h, targetColor, tolerance, leakGuard);
+  } else if (mode === "all_color") {
+    // 🎨 【指定色をすべて透過（スポイト色対応）】
+    const tr = targetColor.r, tg = targetColor.g, tb = targetColor.b;
+    const tolSq = tolerance * tolerance * 3; // 3D距離の二乗
+
+    for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+      const dr = d[i] - tr;
+      const dg = d[i+1] - tg;
+      const db = d[i+2] - tb;
+      const distSq = dr*dr + dg*dg + db*db;
+      if (distSq < tolSq) {
+        mask[p] = 0; // スポイト色に近いので透明
+      } else {
+        mask[p] = 255;
+      }
+    }
   } else if (mode === "line") {
-    // 【手描き黒線抽出 ＆ 太さ調整】
+    // ✍️ 【手描き黒線抽出 ＆ 太さ調整】
     let sampleSum = 0, sampleCnt = 0;
-    const step = 8;
-    for (let i = 0; i < d.length; i += step * 4) {
+    for (let i = 0; i < d.length; i += 32) {
       sampleSum += 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
       sampleCnt++;
     }
     const avgLum = sampleCnt > 0 ? (sampleSum / sampleCnt) : 128;
     const norm = 200.0 / Math.max(60, avgLum);
-    const thresh = 255 - sensitivity;
+    const thresh = 255 - 110;
 
     for (let i = 0, p = 0; i < d.length; i += 4, p++) {
       const lum = (0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]) * norm;
@@ -818,18 +989,6 @@ function processImageItem(index) {
     }
     if (thickness !== 0) {
       mask = fastStrokeAdjust(mask, w, h, thickness);
-    }
-  } else if (mode === "paper") {
-    // 【全白透過】
-    const thresh = 255 - sensitivity;
-    for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-      const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-      const maxC = Math.max(d[i], d[i+1], d[i+2]);
-      const minC = Math.min(d[i], d[i+1], d[i+2]);
-      const paperScore = lum - (maxC - minC) * 0.7;
-      if (paperScore < thresh) {
-        mask[p] = Math.min(255, (thresh - paperScore) * 8);
-      }
     }
   } else {
     // 透過なし
@@ -881,9 +1040,9 @@ function processImageItem(index) {
       const a = mask[srcIdx];
 
       if (mode === "line") {
-        cd[dstIdx] = lr;
-        cd[dstIdx + 1] = lg;
-        cd[dstIdx + 2] = lb;
+        cd[dstIdx] = 0;
+        cd[dstIdx + 1] = 0;
+        cd[dstIdx + 2] = 0;
         cd[dstIdx + 3] = a;
       } else {
         const origI = srcIdx * 4;
@@ -912,7 +1071,7 @@ function processImageItem(index) {
   item.stampCanvas = stampCanvas;
   item.workCanvas = workCanvas;
 
-  // Canvas直接DOM描画（GPU高速転送）
+  // Canvas直接DOM描画
   const previewBox = document.getElementById(`previewBox_${index}`);
   if (previewBox) {
     if (previewBox.firstChild !== stampCanvas) {
@@ -922,24 +1081,29 @@ function processImageItem(index) {
   }
 }
 
-// ★【外側フラッドフィル (Outer Flood Fill) アルゴリズム】★
-// 画像の四辺（外周）から探索し、イラストの輪郭で止まることで「外側の用紙の白」だけを透明化！
-// キャラクターの内側にある白（白目、白い服、白い体）は絶対に消えません！
-function floodFillOuterBackground(d, w, h, sensitivity, leakGuard) {
-  // 1. 線画（壁）判定
-  // sensitivity: 背景用紙の明るさしきい値 (デフォルト110)
-  // 背景は明るく、線画は暗い
-  const lineThreshold = Math.max(40, 255 - sensitivity);
+// 🛡️ スポイト色 × 外側フラッドフィル (Outer Flood Fill)
+// 外周から、スポイト色に近い色（許容範囲内）だけを探索して透明化！
+// 黒線などの輪郭の内側にある白や同色は100%保護されます！
+function floodFillOuterByColor(d, w, h, targetRGB, tolerance, leakGuard) {
+  const tr = targetRGB.r;
+  const tg = targetRGB.g;
+  const tb = targetRGB.b;
+  const tolSq = tolerance * tolerance * 3; // ユークリッド距離の2乗
 
+  // 1. 壁（障壁）マスクの作成
+  // スポイト色と大きく異なる色（濃い線画や被写体の色）は壁
   const isWall = new Uint8Array(w * h);
   for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-    if (lum < lineThreshold) {
-      isWall[p] = 1; // 黒線画は壁
+    const dr = d[i] - tr;
+    const dg = d[i+1] - tg;
+    const db = d[i+2] - tb;
+    const distSq = dr*dr + dg*dg + db*db;
+    if (distSq >= tolSq) {
+      isWall[p] = 1; // 壁（線画または被写体）
     }
   }
 
-  // 線の隙間ガード（手描きの切れ目から透明が中に入り込むのを防止）
+  // 線の隙間ガード（手描きの切れ目からの侵入を防ぐ）
   let wallMap = isWall;
   if (leakGuard > 0) {
     wallMap = new Uint8Array(w * h);
@@ -955,10 +1119,7 @@ function floodFillOuterBackground(d, w, h, sensitivity, leakGuard) {
         for (let ny = yMin; ny <= yMax; ny++) {
           const nrow = ny * w;
           for (let nx = xMin; nx <= xMax; nx++) {
-            if (isWall[nrow + nx] === 1) {
-              hasWall = 1;
-              break;
-            }
+            if (isWall[nrow + nx] === 1) { hasWall = 1; break; }
           }
           if (hasWall === 1) break;
         }
@@ -967,12 +1128,11 @@ function floodFillOuterBackground(d, w, h, sensitivity, leakGuard) {
     }
   }
 
-  // 2. 四辺（外周）から幅優先探索（BFS）で外側背景をマーク
+  // 2. 外周からBFSフラッドフィル
   const isOuterBg = new Uint8Array(w * h);
   const queue = new Int32Array(w * h);
   let head = 0, tail = 0;
 
-  // 上下左右の外枠ピクセルを起点として登録
   for (let x = 0; x < w; x++) {
     if (!wallMap[x]) { isOuterBg[x] = 1; queue[tail++] = x; }
     const b = (h - 1) * w + x;
@@ -985,7 +1145,6 @@ function floodFillOuterBackground(d, w, h, sensitivity, leakGuard) {
     if (!wallMap[r] && !isOuterBg[r]) { isOuterBg[r] = 1; queue[tail++] = r; }
   }
 
-  // 超高速 BFS 探索 (数ミリ秒)
   while (head < tail) {
     const p = queue[head++];
     const cx = p % w;
@@ -1009,7 +1168,7 @@ function floodFillOuterBackground(d, w, h, sensitivity, leakGuard) {
     }
   }
 
-  // 3. マスク生成: 外側背景のみ透明(0)、イラスト内部は白も含めすべて不透明(255)！
+  // 3. マスク生成: 外側背景のみ透明(0)、イラスト内側（白目や服）は不透明(255)
   const mask = new Uint8ClampedArray(w * h);
   for (let p = 0; p < w * h; p++) {
     mask[p] = isOuterBg[p] === 1 ? 0 : 255;
