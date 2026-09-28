@@ -32,7 +32,7 @@
     header {
       background-color: #ffffff;
       border-bottom: 1px solid var(--border-color);
-      padding: 16px 20px;
+      padding: 14px 20px;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -106,13 +106,13 @@
     input[type="range"] {
       flex: 1;
       accent-color: var(--line-green);
-      height: 6px;
+      height: 8px;
       cursor: pointer;
     }
     .slider-val {
-      min-width: 32px;
+      min-width: 36px;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       text-align: right;
       color: var(--line-green);
     }
@@ -200,13 +200,18 @@
       align-items: center;
       gap: 6px;
       margin-top: 12px;
-      background-color: #f1f5f9;
-      color: #334155;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      border: 1px solid var(--border-color);
+      background-color: var(--line-green);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 2px 6px rgba(6, 199, 85, 0.3);
+      cursor: pointer;
+    }
+    .btn-camera:hover {
+      background-color: var(--line-dark-green);
     }
     /* View Controls */
     .view-bar {
@@ -353,7 +358,7 @@
 <header>
   <div>
     <div class="header-title">🎨 LINEスタンプ作成スタジオ</div>
-    <div class="header-sub">スマホ・Windows・Mac対応 | 黒線抽出・太さ調整・自動透過</div>
+    <div class="header-sub">スマホ・Mac・Windows超高速対応 | 黒線抽出・太さ調整・自動透過</div>
   </div>
 </header>
 
@@ -376,10 +381,10 @@
     <div class="control-group" id="groupThickness">
       <label>📏 線の太さ調整</label>
       <div class="slider-row">
-        <input type="range" id="thicknessRange" min="-2" max="10" value="2" step="1">
+        <input type="range" id="thicknessRange" min="-2" max="8" value="2" step="1">
         <span class="slider-val" id="thicknessVal">+2</span>
       </div>
-      <div class="control-desc">-2(極細) 〜 0(元線) 〜 +10(極太ボールド)</div>
+      <div class="control-desc">-2(極細) 〜 0(元線) 〜 +8(太線・くっきり)</div>
     </div>
 
     <!-- Line Color Picker -->
@@ -403,12 +408,12 @@
 
     <!-- Dust Cleaning Slider -->
     <div class="control-group">
-      <label>🧹 紙の影・インク汚れ除去</label>
+      <label>🧹 紙の影・薄い汚れ除去</label>
       <div class="slider-row">
-        <input type="range" id="dustRange" min="0" max="80" value="25" step="5">
-        <span class="slider-val" id="dustVal">25</span>
+        <input type="range" id="dustRange" min="0" max="50" value="20" step="5">
+        <span class="slider-val" id="dustVal">20</span>
       </div>
-      <div class="control-desc">紙の擦れ・指紋・不要な汚れを自動カット</div>
+      <div class="control-desc">紙の擦れ・不要な汚れを自動カット</div>
     </div>
 
     <hr style="border:none; border-top:1px solid var(--border-color); margin: 16px 0;">
@@ -424,8 +429,8 @@
       <div id="outlineSubControls" style="margin-top: 10px; margin-left: 26px;">
         <div class="slider-row" style="margin-bottom: 8px;">
           <span style="font-size:0.8rem; font-weight:600;">太さ:</span>
-          <input type="range" id="outlineWidthRange" min="1" max="15" value="4" step="1">
-          <span class="slider-val" id="outlineWidthVal">4px</span>
+          <input type="range" id="outlineWidthRange" min="1" max="10" value="3" step="1">
+          <span class="slider-val" id="outlineWidthVal">3px</span>
         </div>
       </div>
     </div>
@@ -493,6 +498,7 @@
 // State
 let filesData = [];
 let currentBgClass = "bg-line-talk";
+let renderDebounceTimer = null;
 
 // Elements
 const dropZone = document.getElementById("dropZone");
@@ -520,41 +526,49 @@ const marginRange = document.getElementById("marginRange");
 const marginVal = document.getElementById("marginVal");
 const mainTabCheck = document.getElementById("mainTabCheck");
 
+// Debounced Reprocess
+function scheduleReprocess() {
+  if (renderDebounceTimer) cancelAnimationFrame(renderDebounceTimer);
+  renderDebounceTimer = requestAnimationFrame(() => {
+    reprocessAll();
+  });
+}
+
 // UI Slider Listeners
 thicknessRange.addEventListener("input", (e) => {
   const v = parseInt(e.target.value);
   thicknessVal.textContent = v > 0 ? `+${v}` : v;
-  reprocessAll();
+  scheduleReprocess();
 });
 sensitivityRange.addEventListener("input", (e) => {
   sensitivityVal.textContent = e.target.value;
-  reprocessAll();
+  scheduleReprocess();
 });
 dustRange.addEventListener("input", (e) => {
   dustVal.textContent = e.target.value;
-  reprocessAll();
+  scheduleReprocess();
 });
 outlineWidthRange.addEventListener("input", (e) => {
   outlineWidthVal.textContent = `${e.target.value}px`;
-  reprocessAll();
+  scheduleReprocess();
 });
 marginRange.addEventListener("input", (e) => {
   marginVal.textContent = `${e.target.value}px`;
-  reprocessAll();
+  scheduleReprocess();
 });
 outlineCheck.addEventListener("change", () => {
   document.getElementById("outlineSubControls").style.display = outlineCheck.checked ? "block" : "none";
-  reprocessAll();
+  scheduleReprocess();
 });
 modeSelect.addEventListener("change", () => {
   const isLine = modeSelect.value === "line";
   document.getElementById("groupThickness").style.display = isLine ? "block" : "none";
   document.getElementById("groupLineColor").style.display = isLine ? "block" : "none";
-  reprocessAll();
+  scheduleReprocess();
 });
 lineColorPicker.addEventListener("input", (e) => {
   lineColorHex.textContent = e.target.value;
-  reprocessAll();
+  scheduleReprocess();
 });
 
 // Background Simulator Toggles
@@ -585,9 +599,11 @@ fileInput.addEventListener("change", (e) => {
   if (e.target.files.length) handleFiles(e.target.files);
 });
 
-// Load Files
+// Load and PRE-SCALE Files for Ultra Fast Processing
 function handleFiles(files) {
   const promises = [];
+  const maxDim = 800; // スマホ巨大画像を800pxにプレスケール（高速化の肝！）
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     if (!file.type.match("image.*")) continue;
@@ -596,9 +612,29 @@ function handleFiles(files) {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
+          // Pre-scale down to max 800px to ensure ultra-smooth performance
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const scaleCanvas = document.createElement("canvas");
+          scaleCanvas.width = w;
+          scaleCanvas.height = h;
+          const ctx = scaleCanvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+
           resolve({
             name: file.name,
-            img: img,
+            scaledCanvas: scaleCanvas,
+            w: w,
+            h: h,
             customText: ""
           });
         };
@@ -631,7 +667,7 @@ function renderCards() {
     card.innerHTML = `
       <div class="stamp-header">
         <span>スタンプ #${numStr}</span>
-        <span style="font-size:0.75rem; color:var(--text-sub);">${item.name}</span>
+        <span style="font-size:0.75rem; color:var(--text-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${item.name}</span>
       </div>
       <div>
         <input type="text" placeholder="追加テキスト・セリフ（任意）" value="${item.customText}" oninput="updateText(${index}, this.value)" style="font-size:0.85rem; padding:6px 10px;">
@@ -651,104 +687,91 @@ function renderCards() {
 
 window.updateText = function(index, text) {
   filesData[index].customText = text;
-  processImageItem(index);
+  scheduleReprocess();
 };
 
-// Re-process all items
 function reprocessAll() {
   filesData.forEach((_, index) => {
     processImageItem(index);
   });
 }
 
-// Core Image Processing in Browser Canvas
+// High Speed Image Processing in Browser Canvas
 function processImageItem(index) {
   const item = filesData[index];
-  const srcImg = item.img;
+  if (!item || !item.scaledCanvas) return;
+
+  const w = item.w;
+  const h = item.h;
   const mode = modeSelect.value;
   const thickness = parseInt(thicknessRange.value);
   const sensitivity = parseInt(sensitivityRange.value);
-  const dustMinArea = parseInt(dustRange.value);
+  const dustThreshold = parseInt(dustRange.value);
   const useOutline = outlineCheck.checked;
   const outlineWidth = parseInt(outlineWidthRange.value);
   const margin = parseInt(marginRange.value);
 
-  // Hex to RGB
   const hex = lineColorPicker.value;
   const lr = parseInt(hex.slice(1, 3), 16);
   const lg = parseInt(hex.slice(3, 5), 16);
   const lb = parseInt(hex.slice(5, 7), 16);
 
-  // 1. Offscreen Canvas for extraction
-  const w = srcImg.naturalWidth;
-  const h = srcImg.naturalHeight;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(srcImg, 0, 0);
-
+  const ctx = item.scaledCanvas.getContext("2d", { willReadFrequently: true });
   const imgData = ctx.getImageData(0, 0, w, h);
   const d = imgData.data;
 
-  // Mask Buffer (0: transparent, 255: line)
-  const mask = new Uint8Array(w * h);
+  // Mask Buffer
+  let mask = new Uint8ClampedArray(w * h);
 
   if (mode === "line") {
-    // Illumination compensation + Black line extraction
-    // Calculate global mean brightness to normalize paper
-    let sumLum = 0;
-    for (let i = 0; i < d.length; i += 4) {
-      sumLum += 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+    // 高速照明均一化 ＆ 黒線抽出
+    // 全体の平均明度を高速サンプリング (1/4ステップ)
+    let sampleSum = 0;
+    let sampleCnt = 0;
+    for (let i = 0; i < d.length; i += 16) {
+      sampleSum += 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      sampleCnt++;
     }
-    const avgLum = sumLum / (w * h);
-    const normFactor = 200.0 / Math.max(50, avgLum);
-
-    // Threshold calculation
+    const avgLum = sampleSum / sampleCnt;
+    const norm = 200.0 / Math.max(60, avgLum);
     const thresh = 255 - sensitivity;
 
     for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-      const lum = (0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]) * normFactor;
+      const lum = (0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]) * norm;
       if (lum < thresh) {
-        mask[p] = Math.min(255, (thresh - lum) * 6);
-      } else {
-        mask[p] = 0;
+        const val = (thresh - lum) * 6;
+        mask[p] = val > 255 ? 255 : (val < dustThreshold ? 0 : val);
       }
     }
   } else if (mode === "paper") {
-    // Paper extraction
     const thresh = 255 - sensitivity;
     for (let i = 0, p = 0; i < d.length; i += 4, p++) {
       const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
       const maxC = Math.max(d[i], d[i+1], d[i+2]);
       const minC = Math.min(d[i], d[i+1], d[i+2]);
-      const chroma = maxC - minC;
-      const paperScore = lum - chroma * 0.7;
+      const paperScore = lum - (maxC - minC) * 0.7;
       if (paperScore < thresh) {
-        mask[p] = Math.min(255, (thresh - paperScore) * 8);
-      } else {
-        mask[p] = 0;
+        const val = (thresh - paperScore) * 8;
+        mask[p] = val > 255 ? 255 : val;
       }
     }
   } else {
-    // None
     for (let i = 3, p = 0; i < d.length; i += 4, p++) {
       mask[p] = d[i];
     }
   }
 
-  // 2. Adjust Thickness (Dilation / Erosion)
-  let processedMask = mask;
+  // 高速な線の太さ調整 (Separable 1D Dilation / Erosion: 計算量O(2R)で激速！)
   if (mode === "line" && thickness !== 0) {
-    processedMask = adjustStrokeWidth(mask, w, h, thickness);
+    mask = fastStrokeAdjust(mask, w, h, thickness);
   }
 
-  // 3. Auto Crop Bounding Box
+  // Bounding Box 検出
   let minX = w, minY = h, maxX = 0, maxY = 0;
   for (let y = 0; y < h; y++) {
+    const rowOffset = y * w;
     for (let x = 0; x < w; x++) {
-      const a = processedMask[y * w + x];
-      if (a > 30) {
+      if (mask[rowOffset + x] > 25) {
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -761,7 +784,6 @@ function processImageItem(index) {
     minX = 0; minY = 0; maxX = w - 1; maxY = h - 1;
   }
 
-  // Add padding
   const pad = 6;
   minX = Math.max(0, minX - pad);
   minY = Math.max(0, minY - pad);
@@ -770,55 +792,56 @@ function processImageItem(index) {
   const cropW = maxX - minX + 1;
   const cropH = maxY - minY + 1;
 
-  // 4. Render cropped transparent image
+  // クロップ後キャンバスの生成
   const cropCanvas = document.createElement("canvas");
   cropCanvas.width = cropW;
   cropCanvas.height = cropH;
   const cropCtx = cropCanvas.getContext("2d");
   const cropData = cropCtx.createImageData(cropW, cropH);
+  const cd = cropData.data;
 
   for (let cy = 0; cy < cropH; cy++) {
+    const srcRow = (minY + cy) * w;
+    const dstRow = cy * cropW * 4;
     for (let cx = 0; cx < cropW; cx++) {
-      const srcIdx = (minY + cy) * w + (minX + cx);
-      const dstIdx = (cy * cropW + cx) * 4;
-      const alpha = processedMask[srcIdx];
+      const srcIdx = srcRow + (minX + cx);
+      const dstIdx = dstRow + (cx * 4);
+      const a = mask[srcIdx];
 
       if (mode === "line") {
-        cropData.data[dstIdx] = lr;
-        cropData.data[dstIdx + 1] = lg;
-        cropData.data[dstIdx + 2] = lb;
-        cropData.data[dstIdx + 3] = alpha;
+        cd[dstIdx] = lr;
+        cd[dstIdx + 1] = lg;
+        cd[dstIdx + 2] = lb;
+        cd[dstIdx + 3] = a;
       } else {
         const origI = srcIdx * 4;
-        cropData.data[dstIdx] = d[origI];
-        cropData.data[dstIdx + 1] = d[origI + 1];
-        cropData.data[dstIdx + 2] = d[origI + 2];
-        cropData.data[dstIdx + 3] = alpha;
+        cd[dstIdx] = d[origI];
+        cd[dstIdx + 1] = d[origI + 1];
+        cd[dstIdx + 2] = d[origI + 2];
+        cd[dstIdx + 3] = a;
       }
     }
   }
   cropCtx.putImageData(cropData, 0, 0);
 
-  // 5. White Outline (if enabled)
-  let outlinedCanvas = cropCanvas;
+  // 白フチ付加（高速シャドウ合成）
+  let workCanvas = cropCanvas;
   if (useOutline && outlineWidth > 0) {
-    outlinedCanvas = applyWhiteOutline(cropCanvas, outlineWidth);
+    workCanvas = fastWhiteOutline(cropCanvas, outlineWidth);
   }
 
-  // 6. Text Overlay (if specified)
+  // 文字入れ
   if (item.customText && item.customText.trim()) {
-    outlinedCanvas = applyText(outlinedCanvas, item.customText.trim());
+    workCanvas = applyText(workCanvas, item.customText.trim());
   }
 
-  // 7. Fit to LINE Stamp standard (370 x 320 px)
-  const stampCanvas = fitToStandard(outlinedCanvas, 370, 320, margin);
+  // LINEスタンプ規格 (370 x 320 px)
+  const stampCanvas = fitToStandard(workCanvas, 370, 320, margin);
   item.stampCanvas = stampCanvas;
+  item.mainCanvas = fitToStandard(workCanvas, 240, 240, 10);
+  item.tabCanvas = fitToStandard(workCanvas, 96, 74, 4);
 
-  // Also main (240x240) and tab (96x74)
-  item.mainCanvas = fitToStandard(outlinedCanvas, 240, 240, 10);
-  item.tabCanvas = fitToStandard(outlinedCanvas, 96, 74, 4);
-
-  // Update Preview UI
+  // プレビュー反映
   const previewBox = document.getElementById(`previewBox_${index}`);
   if (previewBox) {
     const dataUrl = stampCanvas.toDataURL("image/png");
@@ -826,55 +849,75 @@ function processImageItem(index) {
   }
 }
 
-// Adjust Stroke Width via Morphological Kernel
-function adjustStrokeWidth(mask, w, h, thickness) {
-  const result = new Uint8Array(w * h);
+// 超高速 1D Separable Dilation/Erosion (数ミリ秒で完了！)
+function fastStrokeAdjust(src, w, h, thickness) {
   const r = Math.abs(thickness);
+  if (r === 0) return src;
+
+  const temp = new Uint8ClampedArray(w * h);
+  const out = new Uint8ClampedArray(w * h);
 
   if (thickness > 0) {
-    // Dilation
+    // 1. 水平方向 Dilation
     for (let y = 0; y < h; y++) {
+      const row = y * w;
       for (let x = 0; x < w; x++) {
         let maxV = 0;
-        for (let dy = -r; dy <= r; dy++) {
-          const ny = y + dy;
-          if (ny < 0 || ny >= h) continue;
-          for (let dx = -r; dx <= r; dx++) {
-            if (dx * dx + dy * dy > r * r) continue;
-            const nx = x + dx;
-            if (nx < 0 || nx >= w) continue;
-            const v = mask[ny * w + nx];
-            if (v > maxV) maxV = v;
-          }
+        const xMin = Math.max(0, x - r);
+        const xMax = Math.min(w - 1, x + r);
+        for (let ix = xMin; ix <= xMax; ix++) {
+          const v = src[row + ix];
+          if (v > maxV) maxV = v;
         }
-        result[y * w + x] = maxV;
+        temp[row + x] = maxV;
+      }
+    }
+    // 2. 垂直方向 Dilation
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        let maxV = 0;
+        const yMin = Math.max(0, y - r);
+        const yMax = Math.min(h - 1, y + r);
+        for (let iy = yMin; iy <= yMax; iy++) {
+          const v = temp[iy * w + x];
+          if (v > maxV) maxV = v;
+        }
+        out[y * w + x] = maxV;
       }
     }
   } else {
     // Erosion
     for (let y = 0; y < h; y++) {
+      const row = y * w;
       for (let x = 0; x < w; x++) {
         let minV = 255;
-        for (let dy = -r; dy <= r; dy++) {
-          const ny = y + dy;
-          if (ny < 0 || ny >= h) continue;
-          for (let dx = -r; dx <= r; dx++) {
-            if (dx * dx + dy * dy > r * r) continue;
-            const nx = x + dx;
-            if (nx < 0 || nx >= w) continue;
-            const v = mask[ny * w + nx];
-            if (v < minV) minV = v;
-          }
+        const xMin = Math.max(0, x - r);
+        const xMax = Math.min(w - 1, x + r);
+        for (let ix = xMin; ix <= xMax; ix++) {
+          const v = src[row + ix];
+          if (v < minV) minV = v;
         }
-        result[y * w + x] = minV;
+        temp[row + x] = minV;
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        let minV = 255;
+        const yMin = Math.max(0, y - r);
+        const yMax = Math.min(h - 1, y + r);
+        for (let iy = yMin; iy <= yMax; iy++) {
+          const v = temp[iy * w + x];
+          if (v < minV) minV = v;
+        }
+        out[y * w + x] = minV;
       }
     }
   }
-  return result;
+  return out;
 }
 
-// Apply White Outline (Sticker effect)
-function applyWhiteOutline(srcCanvas, strokeWidth) {
+// 高速 白フチ（ステッカー風アウトライン）
+function fastWhiteOutline(srcCanvas, strokeWidth) {
   const sw = srcCanvas.width;
   const sh = srcCanvas.height;
   const outW = sw + strokeWidth * 2;
@@ -885,26 +928,26 @@ function applyWhiteOutline(srcCanvas, strokeWidth) {
   outCanvas.height = outH;
   const ctx = outCanvas.getContext("2d");
 
-  // Create silhouette shadow with multiple angles
-  const steps = 16;
+  // 8方向のみに配置（従来の64回から8回に激減！）
   ctx.shadowColor = "#FFFFFF";
-  ctx.shadowBlur = 1;
+  ctx.shadowBlur = strokeWidth;
 
-  for (let s = 1; s <= strokeWidth; s++) {
-    for (let i = 0; i < steps; i++) {
-      const angle = (i * 2 * Math.PI) / steps;
-      const dx = Math.round(Math.cos(angle) * s);
-      const dy = Math.round(Math.sin(angle) * s);
-      ctx.drawImage(srcCanvas, strokeWidth + dx, strokeWidth + dy);
-    }
+  const offsets = [
+    [-strokeWidth, 0], [strokeWidth, 0], [0, -strokeWidth], [0, strokeWidth],
+    [-strokeWidth*0.7, -strokeWidth*0.7], [strokeWidth*0.7, -strokeWidth*0.7],
+    [-strokeWidth*0.7, strokeWidth*0.7], [strokeWidth*0.7, strokeWidth*0.7]
+  ];
+
+  for (let i = 0; i < offsets.length; i++) {
+    ctx.drawImage(srcCanvas, strokeWidth + offsets[i][0], strokeWidth + offsets[i][1]);
   }
 
-  // Turn silhouette into solid white
+  // 輪郭を白で塗りつぶす
   ctx.globalCompositeOperation = "source-in";
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, outW, outH);
 
-  // Overlay original
+  // 原画を中央に重ねる
   ctx.globalCompositeOperation = "source-over";
   ctx.drawImage(srcCanvas, strokeWidth, strokeWidth);
 
@@ -927,15 +970,13 @@ function applyText(srcCanvas, text) {
   ctx.textBaseline = "bottom";
 
   const x = w / 2;
-  const y = h - 10;
+  const y = h - 8;
 
-  // White stroke
   ctx.strokeStyle = "#FFFFFF";
   ctx.lineWidth = Math.max(4, fontSize / 6);
   ctx.lineJoin = "round";
   ctx.strokeText(text, x, y);
 
-  // Dark fill
   ctx.fillStyle = "#1E1E1E";
   ctx.fillText(text, x, y);
 
@@ -954,7 +995,6 @@ function fitToStandard(srcCanvas, targetW, targetH, margin) {
   let newW = Math.round(sw * ratio);
   let newH = Math.round(sh * ratio);
 
-  // Ensure even dimensions
   if (newW % 2 !== 0) newW -= 1;
   if (newH % 2 !== 0) newH -= 1;
   newW = Math.max(2, newW);
